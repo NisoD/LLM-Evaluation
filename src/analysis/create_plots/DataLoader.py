@@ -9,7 +9,7 @@ from datasets import load_dataset
 from huggingface_hub import HfFileSystem
 
 from config.get_config import Config
-from src.analysis.create_plots.check_data import get_parquet_files_from_hf
+# from src.analysis.create_plots.check_data import get_parquet_files_from_hf
 
 repo_name = "eliyahabba/llm-evaluation-analysis-split"
 

@@ -1,0 +1,3 @@
+mmlu.professional_law
+mmlu.human_sexuality
+mmlu.professional_psychology
