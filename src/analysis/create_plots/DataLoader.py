@@ -8,7 +8,7 @@ import pyarrow.compute as pc
 from datasets import load_dataset
 from huggingface_hub import HfFileSystem
 
-from config.get_config import Config
+# from config.get_config import Config
 # from src.analysis.create_plots.check_data import get_parquet_files_from_hf
 
 repo_name = "eliyahabba/llm-evaluation-analysis-split"
@@ -64,7 +64,7 @@ class DataLoader:
                 self.dataset = load_dataset(self.dataset_name, split=self.split)
         print("The size of the data after filtering is: ", len(self.dataset))
         if drop:
-            self.dataset = self.dataset.remove_columns(['family', 'generated_text', 'ground_truth'])
+            self.dataset = self.dataset.remove_columns(['family'])
 
     def load_data_with_filter(self, max_samples=None, drop=True, model_name=None, shots=None, datasets=None):
         """
@@ -95,7 +95,9 @@ class DataLoader:
                 self.dataset = load_dataset(self.dataset_name, split=self.split)
         print("The size of the data after filtering is: ", len(self.dataset))
         if drop:
-            self.dataset = self.dataset.remove_columns(['cumulative_logprob', 'generated_text', 'ground_truth'])
+            self.dataset = self.dataset.remove_columns(['cumulative_logprob'])#,
+                                                        # 'generated_text',
+                                                        # 'ground_truth'])
 
     def extract_data2(
             self,
@@ -186,7 +188,7 @@ class DataLoader:
                 batch_size=100000,  # Adjust based on available memory
                 num_proc=4,
                 remove_columns=dataset_subset.column_names,
-                load_from_cache_file=True,
+                load_from_cache_file=False,
                 desc="Filtering dataset"
             )
 

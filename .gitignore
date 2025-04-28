@@ -1,15 +1,20 @@
-/.idea
-/.unitxt_env
-/src/utils/access_token
-**/__pycache__/
-**/logs/
-**/slurm*
-**/processing_log_*
-**/.DS_Store
-/src/experiments/experiment_preparation/dataset_scheme/old/
-/src/unitxt/
-/src/experiments/experiment_preparation/datasets_configurations/old/
-/src/experiments/experiment_preparation/create_prompts_moran/
-/results/
-**/results_local/**/*.png
-**/results_local/**/*.html
+# Virtual environment
+.venv/
+
+# Data directories
+Data/
+src/experiments/experiment_preparation/dataset_scheme/conversions/hf_map_data/
+
+# Evaluation results
+src/analysis/app/results_local/
+src2/analysis/app/results_local/
+
+# Visualization outputs
+src/analysis/create_plots/simplified_visualizations/
+src/analysis/create_plots/heatmaps/
+src/analysis/create_plots/processed_data/
+src2/analysis/create_plots/
+
+# Cache and temporary files
+**/.ipynb_checkpoints/
+**/.cache/

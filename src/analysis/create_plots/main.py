@@ -1,257 +1,52 @@
-import json
+# MAIN.PY
 import os
-from multiprocessing import Pool, Manager
-
-from tqdm import tqdm
-
-from src.analysis.create_plots.DataLoader import DataLoader
-from src.analysis.create_plots.HammingDistanceClusterAnalyzerAxes import HammingDistanceClusterAnalyzerAxes
-from src.analysis.create_plots.ModelPerformanceAnalyzer import ModelPerformanceAnalyzer
-from src.analysis.create_plots.PromptConfigurationAnalyzerAxes import PromptConfigurationAnalyzerAxes
-from src.analysis.create_plots.PromptQuestionAnalyzer import PromptQuestionAnalyzer
-
-#
-# def process_configuration(params):
-#     """
-#     Process a single configuration of model and shots count
-#     """
-#     model_name, shots_selected, dataset = params
-#     # for Debugging:
-#     # model_name = "mistralai/Mistral-7B-Instruct-v0.3"
-#     print(f"Processing model: {model_name} with {shots_selected} shots")
-#
-#     # analyzer = PromptConfigurationAnalyzerAxes()
-#     # hamming = HammingDistanceClusterAnalyzerAxes()
-#     # prompt_question_analyzer = PromptQuestionAnalyzer()
-#     # performance_analyzer = ModelPerformanceAnalyzer()
-#     # Load data for current configuration
-#     data_loader = DataLoader()
-#     df_partial = data_loader.load_and_process_data(model_name=model_name,
-#                                                    shots=shots_selected,
-#                                                    datasets=[dataset],
-#                                                    max_samples=None)
-#     # if shots_selected == 5:
-#     #     df_partial = df_partial[~df_partial.choices_order.isin(["correct_first", "correct_last"])]
-#     # base_results_dir = "../app/results_local"
-#     if df_partial.empty:
-#         return
-#     df_partial = df_partial[~df_partial.choices_order.isin(["correct_first", "correct_last"])]
-#     base_results_dir = "../app/results_local"
-#     # create global path from the base results directory withou ".."
-#     base_results_dir = os.path.abspath(base_results_dir)
-#
-#     os.makedirs(base_results_dir, exist_ok=True)
-#     #
-#     # performance_analyzer.generate_model_performance_comparison(
-#     #     df=df_partial,
-#     #     model_name=model_name,
-#     #     shots_selected=shots_selected,
-#     #     base_results_dir=base_results_dir
-#     # )
-#     #
-#     # filtered_datasets = analyzer.process_and_visualize_configurations(
-#     #     df=df_partial,
-#     #     model_name=model_name,
-#     #     shots_selected=shots_selected,
-#     #     interesting_datasets=[dataset],
-#     #     base_results_dir=base_results_dir
-#     # )
-#
-#     # interesting_datasets = list(filtered_datasets)
-#     #
-#     # hamming.perform_clustering_for_model(
-#     #     df=df_partial,
-#     #     model_name=model_name,
-#     #     shots_selected=shots_selected,
-#     #     interesting_datasets=interesting_datasets,
-#     #     base_results_dir=base_results_dir
-#     # )
-#     #
-#     # prompt_question_analyzer.process_and_visualize_questions(
-#     #     df=df_partial,
-#     #     model_name=model_name,
-#     #     shots_selected=shots_selected,
-#     #     interesting_datasets=interesting_datasets,
-#     #     base_results_dir=base_results_dir
-#     # )
-#
-#
-# def run_configuration_analysis(num_processes=1) -> None:
-#     """
-#     Run the main analysis pipeline in parallel for evaluating prompt configurations
-#     across different models and shot counts.
-#     """
-#     # Configuration parameters
-#     shots_to_evaluate = [0,5]
-#     models_to_evaluate = [
-#         # 'meta-llama/Llama-3.2-1B-Instruct',
-#         # 'allenai/OLMoE-1B-7B-0924-Instruct',
-#         # 'meta-llama/Meta-Llama-3-8B-Instruct',
-#         'meta-llama/Llama-3.2-3B-Instruct',
-#         # 'mistralai/Mistral-7B-Instruct-v0.3',
-#     ]
-#     interesting_datasets = [
-#         # "ai2_arc.arc_challenge",
-#         # "ai2_arc.arc_easy",
-#         # "hellaswag",
-#         # "openbook_qa",
-#         # "social_iqa",
-#     ]
-#
-#     subtasks = [
-#         "abstract_algebra",
-#         "anatomy",
-#         "astronomy",
-#         "business_ethics",
-#         "clinical_knowledge",
-#         "college_biology",
-#         "college_chemistry",
-#         "college_computer_science",
-#         "college_mathematics",
-#         "college_medicine",
-#         "college_physics",
-#         "computer_security",
-#         "conceptual_physics",
-#         "econometrics",
-#         "electrical_engineering",
-#         "elementary_mathematics",
-#         "formal_logic",
-#         "global_facts",
-#         "high_school_biology",
-#         "high_school_chemistry",
-#         "high_school_computer_science",
-#         "high_school_european_history",
-#         "high_school_geography",
-#         "high_school_government_and_politics",
-#         "high_school_macroeconomics",
-#         "high_school_mathematics",
-#         "high_school_microeconomics",
-#         "high_school_physics",
-#         "high_school_psychology",
-#         "high_school_statistics",
-#         "high_school_us_history",
-#         "high_school_world_history",
-#         "human_aging",
-#         "human_sexuality",
-#         "international_law",
-#         "jurisprudence",
-#         "logical_fallacies",
-#         "machine_learning",
-#         "management",
-#         "marketing",
-#         "medical_genetics",
-#         "miscellaneous",
-#         "moral_disputes",
-#         "moral_scenarios",
-#         "nutrition",
-#         "philosophy",
-#         "prehistory",
-#         "professional_accounting",
-#             "professional_law",
-#         "professional_medicine",
-#         "professional_psychology",
-#         "public_relations",
-#         "security_studies",
-#         "sociology",
-#         "us_foreign_policy",
-#         "virology",
-#         "world_religions",
-#     ]
-#     pro_subtuask = [
-#         "history",
-#         "law",
-#         "health",
-#         "physics",
-#         "business",
-#         "other",
-#         "philosophy",
-#         "psychology",
-#         "economics",
-#         "math",
-#         "biology",
-#         "chemistry",
-#         "computer_science",
-#         "engineering",
-#     ]
-#     interesting_datasets.extend(["mmlu."+ name for name in subtasks])
-#     interesting_datasets = ["mmlu_pro." + name for name in pro_subtuask]
-#
-#     # Setup results directory
-#
-#     # Create parameter combinations for parallel processing
-#     # model_name, shots_selected, dataset
-#     params_list = [
-#         (model_name, shots_selected, dataset)
-#         for dataset in interesting_datasets
-#         for shots_selected in shots_to_evaluate
-#         for model_name in models_to_evaluate
-#     ]
-#
-#     #
-#     # interesting_datasets = ['hellaswag']
-#     # model_name = "meta-llama/Llama-3.2-3B-Instruct"
-#     # models_to_evaluate = [model_name]
-#     # shots_selected = 0
-#     # templates = [
-#     #     "MultipleChoiceTemplatesInstructionsStandard",
-#     #     "MultipleChoiceTemplatesInstructionsWithoutTopicHarness",
-#     #     "MultipleChoiceTemplatesInstructionsProSACould"
-#     # ]
-#     # params_list = [(model_name, shots_selected, dataset) for dataset in interesting_datasets]
-#     with Manager() as manager:
-#         with Pool(processes=num_processes) as pool:
-#             for _ in tqdm(
-#                     pool.imap_unordered(process_configuration_with_immediate_error, params_list),
-#                     total=len(params_list),
-#                     desc="Processing configurations"
-#             ):
-#                 pass
-#
-#
-# import traceback
-# from datetime import datetime
-#
-#
-# def immediate_error_callback(error, params):
-#     print("\n" + "=" * 50)
-#     print(f"Error occurred at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-#     print(f"Parameters that failed: {json.dumps(params, indent=2)}")
-#     print(f"Error message: {str(error)}")
-#     print("Traceback:")
-#     print(traceback.format_exc())
-#     print("=" * 50 + "\n")
-#
-#
-# def process_configuration_with_immediate_error(params):
-#     try:
-#         return process_configuration(params)
-#     except Exception as e:
-#         immediate_error_callback(e, params)
-#         return {'status': 'error', 'params': params, 'error': str(e)}
-#
-#
-# if __name__ == "__main__":
-#     run_configuration_analysis(num_processes=4)
-import json
-import os
-from typing import List, Dict
+from dataclasses import dataclass
+from typing import List, Optional, Dict, Set
+from pathlib import Path
 import pandas as pd
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool
 from tqdm import tqdm
 
+from analysis.create_plots.DataLoader import DataLoader
+import logging
 
-def map_answer_position(answer: str, enumerator: str) -> int:
-    """
-    Maps an answer to its position based on the enumerator type.
+from analysis.create_plots.get_example_from_row import InstanceLoader
 
-    Args:
-        answer: The answer string to map
-        enumerator: The type of enumerator used
+THRESHOLD = 0.1
+# Define the log file path
+log_file = "analysis_log.txt"
+# Configure logging to write to both console and file
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file, mode='w'),  # Write logs to file
+        logging.StreamHandler()  # Also print logs to console
+    ]
+)
 
-    Returns:
-        int: The position (1-based) of the answer
-    """
-    position_mappings = {
+
+@dataclass(frozen=True)
+class AnalysisConfig:
+    """Configuration for analysis pipeline with immutable attributes."""
+    model_name: str
+    shots_selected: int
+    dataset: str
+
+    @property
+    def output_path(self) -> Path:
+        """Generate standardized output path for results."""
+        base_dir = Path("../app/results_local")
+        return base_dir / f"Shots_{self.shots_selected}" / \
+            self.model_name.replace('/', '_') / \
+            self.dataset.replace('/', '_') / \
+            f'low_performance_questions_{THRESHOLD}.parquet'
+
+
+class AnswerMapper:
+    """Maps multiple choice answer strings to valid positions (1-4)."""
+
+    POSITION_MAPPINGS = {
         'greek': "αβγδεζηθικ",
         'keyboard': "!@#$%^₪*)(",
         'capitals': "ABCDEFGHIJ",
@@ -260,235 +55,223 @@ def map_answer_position(answer: str, enumerator: str) -> int:
         'roman': ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
     }
 
-    prefix = answer.split('.')[0].strip()
-    mapping = position_mappings.get(enumerator, "")
-    return mapping.index(prefix) + 1 if prefix in mapping else 0
+    VALID_POSITIONS: Set[int] = {1, 2, 3, 4}
+
+    @classmethod
+    def get_position(cls, answer: str) -> Optional[int]:
+        """
+        Maps an answer to a valid multiple choice position.
+
+        Args:
+            answer: The answer string to map (e.g., "A.", "1)", "α.")
+
+        Returns:
+            Optional[int]: Position (1-4) if valid, None otherwise
+        """
+        if not answer or not isinstance(answer, str):
+            return None
+
+        try:
+            prefix = answer.split('.')[0].strip()
+            if not prefix:
+                return None
+
+            for mapping in cls.POSITION_MAPPINGS.values():
+                if prefix in mapping:
+                    position = mapping.index(prefix) + 1
+                    return position if position in cls.VALID_POSITIONS else exit(1)
+
+            return None
+
+        except (AttributeError, IndexError):
+            return None
 
 
-def analyze_low_performance_questions(df: pd.DataFrame, threshold: float = 0.1) -> pd.DataFrame:
+class PerformanceAnalyzer:
+    """Analyzes model performance on questions."""
+
+    def __init__(self, threshold: float = THRESHOLD):
+        self.threshold = threshold
+
+    def find_low_performers(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Identifies questions with performance below threshold.
+
+        Args:
+            df: DataFrame with model answers and scores
+
+        Returns:
+            pd.DataFrame: Filtered data for low-performing questions
+        """
+        accuracy_stats = (
+            df.groupby('sample_index') # Group By Question Index
+            .agg({
+                'score': ['sum', 'count']
+                # Get Sum of score and Count Number of Instances
+            })
+            .reset_index()
+        )
+
+        accuracy_stats.columns = ['sample_index', 'correct_count', 'total_count']
+
+        accuracy_stats['accuracy'] = (
+                accuracy_stats['correct_count'] /
+                accuracy_stats['total_count']
+        ).round(3)
+
+        low_performers = accuracy_stats[accuracy_stats['accuracy'] < self.threshold]
+
+        # Log information about each low-performing sample
+        for _, row in low_performers.iterrows():
+            sample_index = row['sample_index']
+            correct = row['correct_count']
+            total = row['total_count']
+            accuracy = row['accuracy']
+
+            logging.info(
+                f"Low performer detected - Sample {sample_index}: "
+                f"Accuracy {accuracy:.1%} ({correct}/{total} correct)"
+            )
+
+        return df[df['sample_index'].isin(low_performers['sample_index'])]
+
+
+def process_configuration(config: AnalysisConfig) -> Dict[str, any]:
     """
-    Analyzes questions with low performance across variations.
+    Processes a single configuration of model and dataset.
 
     Args:
-        df: DataFrame containing the model's answers
-        threshold: Accuracy threshold for identifying low-performance questions
+        config: Configuration parameters for analysis
 
     Returns:
-        pd.DataFrame: Processed data for low-performance questions
-    """
-    # Calculate accuracy per question
-    accuracy_stats = (
-        df.groupby('sample_index')
-        .agg({
-            'score': ['sum', 'count']
-        })
-        .reset_index()
-    )
-    accuracy_stats.columns = ['sample_index', 'correct_count', 'total_count']
-    accuracy_stats['accuracy'] = (accuracy_stats['correct_count'] / accuracy_stats['total_count']).round(3)
-
-    # Filter low performers
-    low_performers = accuracy_stats[accuracy_stats['accuracy'] < threshold]
-
-    # Process answers for low-performing questions
-    if not low_performers.empty:
-        result_df = (
-            df[df['sample_index'].isin(low_performers['sample_index'])]
-            .assign(
-                answer_position=lambda x: x.apply(
-                    lambda row: map_answer_position(row['closest_answer'], row['enumerator']),
-                    axis=1
-                )
-            )
-            .merge(
-                accuracy_stats[['sample_index', 'accuracy']],
-                on='sample_index',
-                how='left'
-            )
-        )
-        return result_df
-
-    return pd.DataFrame()
-
-
-def process_configuration(params: tuple) -> None:
-    """
-    Process a single configuration of model and shots count.
-
-    Args:
-        params: Tuple containing (model_name, shots_selected, dataset)
-    """
-    model_name, shots_selected, dataset = params
-    print(f"Processing model: {model_name} with {shots_selected} shots for dataset: {dataset}")
-
-    # Load data for current configuration
-    data_loader = DataLoader()
-    df_partial = data_loader.load_and_process_data(
-        model_name=model_name,
-        shots=shots_selected,
-        datasets=[dataset],
-        max_samples=None
-    )
-
-    if df_partial.empty:
-        return
-
-    # Filter out specific choices orders
-    df_partial = df_partial[~df_partial.choices_order.isin(["correct_first", "correct_last"])]
-
-    # Process low-performance questions
-    results_df = analyze_low_performance_questions(df_partial)
-
-    if not results_df.empty:
-        # Create output directory
-        base_results_dir = os.path.abspath("../app/results_local")
-        output_dir = os.path.join(
-            base_results_dir,
-            f"Shots_{shots_selected}",
-            model_name.replace('/', '_'),
-            dataset.replace('/', '_')
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Save results
-        output_path = os.path.join(output_dir, 'low_performance_questions.parquet')
-        results_df.to_parquet(output_path)
-        print(f"Saved results to {output_path}")
-
-
-def process_with_error_handling(params: tuple) -> Dict:
-    """
-    Wrapper function for process_configuration with error handling.
-
-    Args:
-        params: Configuration parameters
-
-    Returns:
-        Dict: Status of the processing
+        Dict containing processing status and metrics
     """
     try:
-        return {'status': 'success', 'params': params, 'result': process_configuration(params)}
+        print(f"Processing {config.model_name} with {config.shots_selected} "
+              f"shots for {config.dataset}")
+
+        data_loader = DataLoader()
+        df = data_loader.load_and_process_data(
+            model_name=config.model_name,
+            shots=config.shots_selected,
+            datasets=[config.dataset],
+            max_samples=None
+        )
+
+        if df.empty:
+            return {"status": "empty", "config": config}
+
+        # Filter specific choices orders using vectorized operations
+        mask = (df['shots'] != 5) | (~df['choices_order'].isin(["correct_first", "correct_last"]))
+        df = df[mask]
+
+        # Log total configurations per question
+        question_counts = df.groupby("sample_index").size()
+        correct_counts = df.groupby("sample_index")["score"].sum()
+
+        for question_id in question_counts.index:
+            logging.info(
+                f"Question {question_id}: {question_counts[question_id]} configurations, "
+                f"{correct_counts.get(question_id, 0)} correct"
+            )
+
+        # Analyze performance
+        analyzer = PerformanceAnalyzer()
+        df = analyzer.find_low_performers(df)
+
+        if df.empty:
+            return {"status": "no_low_performers", "config": config}
+
+        # Map answers to positions with validation
+        df = df.copy()
+        initial_rows = len(df)
+
+        # Map ground truth to position
+
+        # Map model's chosen answer to position
+        # Create a copy of df to prevent modifying the original during get_example_from_index
+        working_df = df.copy()
+        chosen_positions = InstanceLoader.get_example_from_index(config.dataset, working_df)
+
+        # Only keep rows that exist in chosen_positions (some may have been dropped)
+        df = df.loc[chosen_positions.index]
+        df['chosen_position'] = chosen_positions
+
+        # Log a sample of the results
+        logging.info(f"Sample of chosen positions: {df['chosen_position'].sample(min(5, len(df))).to_string()}")
+
+        if df.empty:
+            return {
+                "status": "invalid_mappings",
+                "config": config,
+                "initial_rows": initial_rows
+            }
+
+        # Save processed results
+        output_path = config.output_path
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(output_path)
+
+        return {
+            "status": "success",
+            "config": config,
+            "initial_rows": initial_rows,
+            "final_rows": len(df)
+        }
+
     except Exception as e:
-        print(f"\nError processing {params}:\n{str(e)}")
-        return {'status': 'error', 'params': params, 'error': str(e)}
+        logging.exception(f"Error processing {config.model_name} with {config.dataset}")
+        return {
+            "status": "error",
+            "config": config,
+            "error": str(e)
+        }
 
 
-def run_configuration_analysis(num_processes: int = 1) -> None:
+def run_analysis_pipeline(num_processes: int = 4) -> None:
     """
-    Run the analysis pipeline for MMLU and MMLU Pro datasets.
+    Runs the complete analysis pipeline with parallel processing.
 
     Args:
-        num_processes: Number of parallel processes to use
+        num_processes: Number of worker processes to use
     """
-    # Configuration
-    shots_to_evaluate = [0, 5]
-    # models_to_evaluate = [
-    #     #         # 'meta-llama/Llama-3.2-1B-Instruct',
-        #         # 'allenai/OLMoE-1B-7B-0924-Instruct',
-    #     #         # 'meta-llama/Meta-Llama-3-8B-Instruct',
-    #     #         'meta-llama/Llama-3.2-3B-Instruct',
-    #     #         # 'mistralai/Mistral-7B-Instruct-v0.3',
-    #     #     ]
-    models_to_evaluate = ['allenai/OLMoE-1B-7B-0924-Instruct']
-
-    # MMLU datasets
+    models = [
+        'allenai/OLMoE-1B-7B-0924-Instruct',
+        'meta-llama/Meta-Llama-3-8B-Instruct'
+    ]
+    shots = [0, 5]
     mmlu_subtasks = [
-        "abstract_algebra",
-        "anatomy",
-        "astronomy",
-        "business_ethics",
-        "clinical_knowledge",
         "college_biology",
-        "college_chemistry",
-        "college_computer_science",
-        "college_mathematics",
-        "college_medicine",
-        "college_physics",
-        "computer_security",
-        "conceptual_physics",
-        "econometrics",
-        "electrical_engineering",
-        "elementary_mathematics",
-        "formal_logic",
-        "global_facts",
-        "high_school_biology",
-        "high_school_chemistry",
-        "high_school_computer_science",
         "high_school_european_history",
-        "high_school_geography",
-        "high_school_government_and_politics",
-        "high_school_macroeconomics",
-        "high_school_mathematics",
-        "high_school_microeconomics",
-        "high_school_physics",
-        "high_school_psychology",
-        "high_school_statistics",
-        "high_school_us_history",
-        "high_school_world_history",
-        "human_aging",
-        "human_sexuality",
-        "international_law",
-        "jurisprudence",
-        "logical_fallacies",
-        "machine_learning",
-        "management",
         "marketing",
-        "medical_genetics",
-        "miscellaneous",
-        "moral_disputes",
-        "moral_scenarios",
-        "nutrition",
-        "philosophy",
-        "prehistory",
-        "professional_accounting",
-        "professional_law",
-        "professional_medicine",
-        "professional_psychology",
-        "public_relations",
-        "security_studies",
         "sociology",
-        "us_foreign_policy",
-        "virology",
-        "world_religions",
+        "world_religions"
     ]
-
-    # MMLU Pro datasets
-    mmlu_pro_subtasks = [
-        "history", "law", "health", "physics", "business", "other",
-        "philosophy", "psychology", "economics", "math", "biology",
-        "chemistry", "computer_science", "engineering"
+    base_datasets = [
+        "ai2_arc.arc_challenge",
+        "ai2_arc.arc_easy",
+        "hellaswag",
+        "openbook_qa",
+        "social_iqa",
     ]
+    datasets = base_datasets + [f"mmlu.{task}" for task in mmlu_subtasks]
 
-    # Combine all datasets
-    datasets = (
-        [
-            "ai2_arc.arc_challenge",
-            "ai2_arc.arc_easy",
-            "hellaswag",
-            "openbook_qa",
-            "social_iqa",
-        ]+
-            [f"mmlu.{task}" for task in mmlu_subtasks] +
-            [f"mmlu_pro.{task}" for task in mmlu_pro_subtasks]
-    )
-
-    # Create parameter combinations
-    params_list = [
-        (model_name, shots, dataset)
-        for model_name in models_to_evaluate
-        for shots in shots_to_evaluate
+    configs = [
+        AnalysisConfig(model, shots_val, dataset)
+        for model in models
+        for shots_val in shots
         for dataset in datasets
     ]
 
-    # Run analysis
-    with Manager() as manager:
-        with Pool(processes=num_processes) as pool:
-            list(tqdm(
-                pool.imap_unordered(process_with_error_handling, params_list),
-                total=len(params_list),
-                desc="Processing configurations"
-            ))
+    with Pool(processes=num_processes) as pool:
+        results = list(tqdm(
+            pool.imap_unordered(process_configuration, configs),
+            total=len(configs),
+            desc="Processing configurations"
+        ))
+
+
 
 
 if __name__ == "__main__":
-    run_configuration_analysis(num_processes=4)
+    run_analysis_pipeline()
